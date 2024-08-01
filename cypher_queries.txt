@@ -1,0 +1,18 @@
+To create the song recommendations run: 
+python3 pre_processing.py
+Copy the csv 'similarity_score.csv' into the import folder for neo4j. 
+
+
+Loading the CSV into neo4j: 
+
+LOAD CSV WITH HEADERS FROM 'file:///similarity_score.csv' AS row 
+MERGE (s:Song {track_id:row.track_id, artist: row.track_artist_name, track_name: row.track_name, album_name : row.track_album_name, track_genre: row.track_genre, popularity: toInteger(row.track_popularity)})
+MERGE (ts:Song {track_id: row.target_track_id, artist : row.target_track_artist_name, track_name: row.target_track_name, album_name : row.target_track_album_name, track_genre : row.target_track_genre, popularity : toInteger(row.target_track_popularity)})
+MERGE (s)-[:SIMILAR_TO{similarity : row.similarity}]->(ts)
+
+Song recommendation query: 
+
+MATCH (s:Song)-[r:SIMILAR_TO]->(ts:Song)
+WHERE ts.album_name = 'Is This It' AND s.popularity > 45
+RETURN s, ts
+ORDER BY r.similarity DESC LIMIT 5; 
